@@ -10,7 +10,7 @@ def summarize_email(email_text):
     max_length = 150
     min_length = 80
     
-    summary = summarizer(email_text, max_length=max_length, min_length=min_length, do_sample=False,)
+    summary = summarizer(email_text, max_length=max_length, min_length=min_length, do_sample=False)
     return summary[0]['summary_text']
 
 

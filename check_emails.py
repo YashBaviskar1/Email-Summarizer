@@ -36,6 +36,7 @@ def fetch_latest_email():
                 if isinstance(response_part, tuple):
                     email_msg = email.message_from_bytes(response_part[1])
                     # print(email_msg)
+                    
                     print("New Email Subject:", email_msg['subject'])
                     print("From:", email_msg['from'])
                     print("To:", email_msg['to'])
@@ -67,11 +68,10 @@ def fetch_latest_email():
                             print("Dynamic Tasks to Complete:")
                             for task in dynamic_tasks_list:
                                 print(f"- {task}")
+                            data = {'sender' : email_msg['from'], 'time' : email_msg['date'], 'message' : email_text, 'summary' : summarized_email_text}
+                            return data 
 
     else:
         print("No new emails.")
-
+        return None
     mail.logout()
-
-if __name__ == "__main__":
-    fetch_latest_email()

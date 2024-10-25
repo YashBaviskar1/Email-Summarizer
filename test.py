@@ -24,7 +24,7 @@ for response_part in msg:
 
 
         subject, encoding = decode_header(msg["Subject"])[0]
-        #print(msg["FROM"])
+        print(msg["FROM"])
         if isinstance(subject, bytes):
             subject = subject.decode(encoding if encoding else "utf-8")
         print("Subject:", subject)
