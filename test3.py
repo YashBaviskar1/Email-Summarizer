@@ -2,14 +2,22 @@ import time
 from itertools import chain
 import email
 import imaplib
+import os 
+from PyPDF2 import PdfReader
+from summarizer import summarize_email
 imap_ssl_host = 'imap.gmail.com'
 imap_ssl_port = 993
 username = 'baymaxbots@gmail.com'
 password = 'zbvy fash octd iwii'
-
+from PyPDF2 import PdfReader
+from summarizer import summarize_email
 criteria = {}
 uid_max = 0
-email_text = None
+download_folder = "attachments"  
+
+if not os.path.exists(download_folder):
+    os.makedirs(download_folder)
+
 def search_string(uid_max, criteria):
     c = list(map(lambda t: (t[0], '"' + str(t[1]) + '"'), criteria.items())) + [('UID', '%d:*' % (uid_max + 1))]
     return '(%s)' % ' '.join(chain(*c))
@@ -34,35 +42,42 @@ def fetch_latest_email():
             for response_part in data:
                 if isinstance(response_part, tuple):
                     email_msg = email.message_from_bytes(response_part[1])
-                    # print(email_msg)
                     
                     print("New Email Subject:", email_msg['subject'])
                     print("From:", email_msg['from'])
                     print("To:", email_msg['to'])
                     print("Date:", email_msg['date'])  
-                    email_text = None
+
                     for part in email_msg.walk():
                         content_type = part.get_content_type()
                         content_disposition = str(part.get("Content-Disposition"))
-                        try:
-        
-                            body = part.get_payload(decode=True)
-                        except:
-                            pass
-                        if content_type == "text/plain" and "attachment" not in content_disposition:
-                            print(1)
-                            print("Message:", body[0 : len(body)-2])
-                            email_text = body.decode('utf-8').replace('\r', '').replace('\n', '').strip()
-                        else:
-                            content_type = email_msg.get_content_type()
-                            body = email_msg.get_payload(decode=True)
-                            if content_type == "text/plain":
-                                print(2)
-                                print("Message:", body)
 
+                        if part.get_content_maintype() == 'multipart':
+                            continue  
+
+                        if part.get('Content-Disposition') is not None:
+  
+                            if content_disposition and 'attachment' in content_disposition:
+                                file_name = part.get_filename()
+                                if file_name and file_name.endswith('.pdf'):
+                                    file_path = os.path.join(download_folder, file_name)
+                                    with open(file_path, 'wb') as f:
+                                        f.write(part.get_payload(decode=True))
+                                    print(f"Downloaded attachment: {file_name}")
+                                    reader = PdfReader(file_path)
+                                    text = " "
+                                    for page in reader.pages :
+                                        text += page.extract_text()
+                                    pdf_text_summary = summarize_email(text)
+                                    print(f"Summary of the Attachment pdf :{pdf_text_summary}")
+                            else : 
+                                print("No attachments in this mail ")
+                        else :
+                            print("No attachments in this mail ")
     else:
         print("No new emails.")
         return None
+
     mail.logout()
 
 fetch_latest_email()
